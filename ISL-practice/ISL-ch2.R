@@ -76,3 +76,6 @@ A[, 1:2]
 A[1, ]
 A[-c(1,3), ]
 dim(A)
+
+#Loading Data
+Auto <- read.table("Auto.data")
