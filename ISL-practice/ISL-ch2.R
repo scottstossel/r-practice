@@ -93,3 +93,27 @@ dim(Auto)
 names(Auto)
 
 plot(Auto$cylinders, Auto$mpg)
+plot(Auto$cylinders, Auto$mpg, col = "red")
+plot(Auto$cylinders, Auto$mpg, col = "red", varwidth = T)
+plot(Auto$cylinders, Auto$mpg, col = "red", varwidth = T,
+     horizontal = T)
+plot(Auto$cylinders, Auto$mpg, col = "red",
+     xlab = "cylinders", ylab = "MPG")
+
+hist(Auto$mpg)
+hist(Auto$mpg, col = 2)
+hist(Auto$mpg, col = 2, breaks = 15)
+
+#pairs
+pairs(Auto)
+pairs(
+  ~ mpg + displacement + horsepower + weight + acceleration, data = Auto
+)
+
+#horsepower plots
+plot(Auto$horsepower, Auto$mpg)
+
+identify(Auto$horsepower, Auto$mpg)
+summary(Auto$mpg)
+
+summary(Auto)
