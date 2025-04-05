@@ -78,4 +78,18 @@ A[-c(1,3), ]
 dim(A)
 
 #Loading Data
-Auto <- read.table("Auto.data")
+Auto <- read.table("Auto.data", 
+    header = T, 
+    na.strings = "?",
+    stringsAsFactors = T)
+View(Auto)
+head(Auto)
+
+dim(Auto)
+Auto[1:4, ]
+Auto <- na.omit(Auto)
+dim(Auto)
+
+names(Auto)
+
+plot(Auto$cylinders, Auto$mpg)
