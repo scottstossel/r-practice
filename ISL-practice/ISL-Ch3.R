@@ -68,3 +68,13 @@ lm.fit5 <- lm(medv ~ poly(lstat, 5))
 summary(lm.fit5)
 
 summary(lm(medv ~ log(rm), data = Boston))
+
+
+
+######Qualitative Predictors
+head(Carseats)
+lm.fit <- lm(Sales ~ . + Income:Advertising + Price:Age,
+             data = Carseats)
+summary(lm.fit)
+attach(Carseats)
+contrasts(ShelveLoc)
