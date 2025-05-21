@@ -1,0 +1,135 @@
+---
+title: "Homework1"
+output: html_document
+date: "2025-05-13"
+---
+## Question 2.1: Data Preprocessing
+```{r setup, include=FALSE}
+telcom_churn <- read.csv("Telco_Customer_Churn.csv", header=T,na.strings=c("","NA"))
+```
+
+```{r data summary}
+str(telcom_churn)
+summary(telcom_churn)
+colSums(is.na(telcom_churn))
+```
+```{r clean data}
+# convert SeniorCitizen from int to binary variable
+telcom_churn$SeniorCitizen <- factor(telcom_churn$SeniorCitizen, labels = c("No", "Yes"))
+
+#remove missing values (11 from TotalCharges)
+telcom_churn <- na.omit(telcom_churn)
+
+sum(is.na(telcom_churn$TotalCharges))
+
+str(telcom_churn)
+```
+## 2.2 Probability of customer churn
+```{r customer-churn probability}
+pi_hat <- mean(telcom_churn$Churn == "Yes")
+pi_hat
+```
+```{r customer-churn confidence interval}
+alpha <- 0.05
+n <- sum(!is.na(telcom_churn$Churn))
+var.wald <- pi_hat*(1 - pi_hat)/n
+lower <- pi_hat - qnorm(p = 1-alpha/2) * sqrt(var.wald)
+upper <- pi_hat + qnorm(p = 1-alpha/2) * sqrt(var.wald)
+c(lower, upper)
+```
+The probability of a customer churning was calculated to be 0.265785 with a 95% confidence interval of (0.2554601, 0.2761099). If this procedure were to be repeated infinitely, 95% of these confidence intervals would contain the true probability. Since this range is well above 0, we can say that pi_hat is statistically different from zero.
+
+## 2.3 Comparison between senior and non-senior customers
+```{r plot seniority churn barplot}
+library(ggplot2)
+
+ggplot(telcom_churn, aes(x = SeniorCitizen, fill = Churn)) +
+  geom_bar(position = "fill") +
+    labs(
+      title = "Churn Proportion vs Senior Citizen Status",
+      x = "Senior Citizen Status",
+      y = "Proportion",
+      fill = "Churn"
+    )
+```
+
+Based on this bar chart, it appears that senior citizens have a higher churn rate than non-senior citizens.
+
+## 2.4 Contingency table
+```{r contingency table}
+churn_probability <- prop.table(table(telcom_churn$SeniorCitizen, telcom_churn$Churn), margin = 1)[, "Yes"]
+data.frame(Senior_Status = c("Non-Senior", "Senior"),
+  Churn_Probability = churn_probability
+)
+```
+Based on this table, there is an approximately 18% difference in churn probability across groups, therefore, there is a practically significant difference. 
+
+## 2.5 Confidence intervals for the difference of two probabilities
+```{r senior-non-senior wald confidence intervals}
+alpha <- 0.05
+z <- qnorm(p = 1-alpha/2)
+
+churn_count <- table(SeniorStatus = telcom_churn$SeniorCitizen, Churn = telcom_churn$Churn)
+
+#senior
+n_senior <- sum(churn_count["Yes", ])
+pi_hat_senior <- churn_count["Yes", "Yes"] / n_senior
+
+#non-senior
+n_non_senior <- sum(churn_count["No", ])
+pi_hat_non_senior <- churn_count["No", "Yes"] / n_non_senior
+
+var.wald <- pi_hat_senior*(1-pi_hat_senior)/ n_senior + pi_hat_non_senior*(1-pi_hat_non_senior)/n_non_senior
+
+####95% Wald confidence interval
+pi_hat_senior - pi_hat_non_senior + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(var.wald)
+```
+```{r senior-non-senior Agresti-Caffo confidence intervals}
+#AC CI
+pi_tilde_senior <- (churn_count["Yes", "Yes"] + 1) / (n_senior + 2)
+pi_tilde_non_senior <- (churn_count["No", "Yes"] + 1) / (n_non_senior + 2)
+
+pi__tilde_diff <- pi_tilde_senior - pi_tilde_non_senior
+
+var.AC <- ((pi_tilde_senior * (1 - pi_tilde_senior)) / (n_senior + 2) +
+  (pi_tilde_non_senior * (1 - pi_tilde_non_senior)) / (n_non_senior + 2))
+
+pi_hat_senior - pi_tilde_non_senior + qnorm(p = c(alpha/2, 1-alpha/2)) * sqrt(var.AC)
+```
+The Wald Confidence Interval returned a lower and upper bound of (0.1497251, 0.2108950) while the Agresti-Caffo returned an interval of (0.1496579, 0.2107834). There is not much difference between the two intervals.
+
+## 2.6 Test for the difference of two probabilities
+```{r hypothesis-test}
+c.table <- table(Senior_Status = telcom_churn$SeniorCitizen,
+  Churn = telcom_churn$Churn)
+
+prop.test(x = c(c.table["Yes", "Yes"], c.table["No", "Yes"]),
+  n = c(sum(c.table["Yes", ]), sum(c.table["No", ])),
+  conf.level = 0.95, correct = FALSE)
+```
+Based on this hypothesis test, the probability of churn differs between senior and non-senior customers. We should reject the null hypothesis.
+
+## 2.7 Relative risks
+```{r relative-risks}
+var.log.RR <- 1/c.table["Yes","Yes"] - 1/sum(c.table["Yes",]) + 
+  1/c.table["No","Yes"] - 1/sum(c.table["No",])
+
+ci <- exp(log(pi_hat_senior/pi_hat_non_senior) + qnorm(p = c(alpha/2, 1-alpha/2)) *
+  sqrt(var.log.RR))
+round(ci, 4)
+round(pi_hat_senior/pi_hat_non_senior, 4)
+```
+The relative risk of seniors vs non-seniors churning is 1.7624 with a 95% Wald Confidence Interval of (1.6228, 1.9140). This shows that seniors are approximately 76% more likely to churn than non-seniors. These findings are consistent with previous ones indicating the higher probability of senior churn.
+
+## 2.8 Odds ratios
+```{r odds-ratios}
+OR.hat <- c.table["Yes","Yes"]*c.table["No","No"] /
+    (c.table["No","Yes"]*c.table["Yes","No"])
+
+var.log.OR <- 1/c.table["Yes","Yes"] + 1/c.table["Yes","No"] + 1/c.table["No","Yes"] + 1/c.table["No","No"]
+OR.CI <- exp(log(OR.hat) + qnorm(p = c(alpha/2, 1-alpha/2)) *
+  sqrt(var.log.OR))
+round(OR.CI, 4)
+round(OR.hat, 4)
+```
+The odds of a senior churning compared to a non-senior is approximately 2.17 meaning the estimated odds are twice as large for a senior. The calculated confidence interval, (2.0218, 2.6331), indicates that this result is statistically significant, since 1 is not included in this range.
