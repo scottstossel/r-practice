@@ -92,3 +92,9 @@ symbols(x = w$distance, y = w$good/n$good, circles = sqrt(n$good),
 curve(expr = predict(object = mod.fit, newdata = 
   data.frame(distance = x), type = "response", col = "blue",
   add = TRUE, xlim = c(18,66)))
+
+#use glm
+mod.fit.glm <- glm(formula = good ~ distance, family = binomial(link = logit),
+  data = placekick, trace = TRUE, epsilon = 0.0001, maxit = 50)
+
+mod.fit.glm$control
