@@ -23,3 +23,17 @@ plot(model.87)
 
 pooled.ols.fit <- lm(crmrte ~ d87+unem, data = crime2)
 summary(pooled.ols.fit)
+
+data("crime3")
+head(crime3)
+
+str(crime3)
+
+table(crime3$district)
+
+summary(lm(clcrime ~ cavgclr, data = crime3))
+library(plm)
+
+crime3.paneldf <- pdata.frame(crime3, index = c("district", "year"),
+                              drop.index = TRUE, row.names = TRUE)
+summary(plm(lcrime ~ avgclr, data = crime3.paneldf, model = "fd"))
